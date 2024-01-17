@@ -1,0 +1,6 @@
+openai
+SpeechRecognition
+pyaudio
+python-dotenv
+soundfile
+sounddevice
