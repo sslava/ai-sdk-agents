@@ -1,0 +1,11 @@
+.changeset
+.DS_Store
+.editorconfig
+.eslintignore
+.git
+.gitattributes
+src
+tests
+tsup.config.ts
+vitest.confit.ts
+yarn.lock
