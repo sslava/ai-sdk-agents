@@ -1,13 +1,14 @@
 import assert from 'node:assert';
 
 import {
-  formatDataStreamPart,
   smoothStream,
   streamText,
   StreamTextOnFinishCallback,
   tool,
   Tool,
   ToolSet,
+  Output,
+  generateText,
 } from 'ai';
 
 import { getContextPrompt, RunFlowContext } from './context.js';
@@ -31,6 +32,7 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
   ) {
     const tools = this.getTools(agent.tools, ctx);
     const systemPrompt = getContextPrompt(agent.systemPrompt, ctx);
+
     const result = streamText({
       model: agent.model,
       system: systemPrompt,
@@ -57,27 +59,22 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
     assert(agent.toolParams, 'toolParams is required');
     assert(agent.description, 'description is required');
 
-    const { parameters, argsToMessages } = agent.toolParams;
+    const { input, argsToMessages } = agent.toolParams;
 
     return tool({
       description: agent.description,
-      parameters,
+      parameters: input,
       execute: async (args: inferParameters<P> & { reasoning?: string }) => {
         try {
-          if (typeof args.reasoning === 'string') {
-            ctx.writer?.getStream()?.write(formatDataStreamPart('reasoning', args.reasoning));
-          }
+          ctx.writer?.reasoning(args.reasoning);
 
-          const systemPrompt = getContextPrompt(agent.systemPrompt, ctx);
-          const tools = this.getTools(agent.tools, ctx);
-
-          const messages = argsToMessages(args);
-          const result = await streamText({
+          const result = await generateText({
             model: agent.model,
-            system: systemPrompt,
-            messages,
-            tools,
+            system: getContextPrompt(agent.systemPrompt, ctx),
+            messages: argsToMessages(args),
+            tools: this.getTools(agent.tools, ctx),
             maxSteps: agent.maxSteps,
+            experimental_output: agent.output ? Output.object({ schema: agent.output }) : undefined,
             // onFinish: ({ response }) => {
             //   const finalMessages = appendResponseMessages({
             //     messages,
@@ -88,14 +85,14 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
             // },
           });
 
-          await result.consumeStream();
-          const text = await result.text;
-
-          return { result: text, success: true };
+          if (agent.output) {
+            return result.experimental_output;
+          }
+          return { response: result.text, success: true };
         } catch (error) {
           console.error(`${agent.name ?? agent.description} tool error:`, error);
           return {
-            result: error instanceof Error ? error.message : 'Unknown error occurred',
+            response: error instanceof Error ? error.message : 'Unknown error occurred',
             success: false,
           };
         }
@@ -103,7 +100,7 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
     });
   }
 
-  protected getTools<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+  private getTools<T extends GenericToolSet<C, P>, P extends ToolParameters>(
     factories: T | undefined,
     ctx: C
   ) {

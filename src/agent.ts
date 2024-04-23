@@ -1,5 +1,5 @@
 import { LanguageModel, StreamTextOnFinishCallback, ToolSet, Message as AIMessage } from 'ai';
-import { z } from 'zod';
+import { Schema, z } from 'zod';
 
 import { GenericToolSet, inferParameters, ToolParameters } from './tools.js';
 import { RunFlowContext } from './context.js';
@@ -11,6 +11,8 @@ export class LlmAgent<
 > {
   public readonly isLlmAgent = true;
 
+  public readonly output?: z.Schema<T, z.ZodTypeDef, any> | Schema<T>;
+
   public readonly name?: string;
   public readonly description?: string;
   public readonly model: LanguageModel;
@@ -21,7 +23,7 @@ export class LlmAgent<
   public readonly onStreamTextFinish?: StreamTextOnFinishCallback<ToolSet>;
 
   public readonly toolParams?: {
-    parameters: P;
+    input: P;
     argsToMessages: (args: inferParameters<P>) => AIMessage[];
   };
 
@@ -46,8 +48,9 @@ export class LlmAgent<
     onStreamTextFinish?: StreamTextOnFinishCallback<ToolSet>;
     systemPrompt: string | ((ctx: C) => string);
     tools?: T;
+    output?: z.Schema<T, z.ZodTypeDef, any> | Schema<T>;
     asTool?: {
-      parameters: P;
+      input: P;
       argsToMessages: (args: inferParameters<P>) => AIMessage[];
     };
     maxSteps?: number;

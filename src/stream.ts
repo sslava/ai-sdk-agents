@@ -1,4 +1,4 @@
-import { DataStreamWriter, StreamTextResult, ToolSet } from 'ai';
+import { DataStreamWriter, formatDataStreamPart, StreamTextResult, ToolSet } from 'ai';
 
 export class VercelStreamWriter {
   constructor(private readonly stream: DataStreamWriter) {}
@@ -13,5 +13,11 @@ export class VercelStreamWriter {
       sendUsage: true,
       sendSources: true,
     });
+  }
+
+  public reasoning(reasoning?: unknown) {
+    if (typeof reasoning === 'string') {
+      this.stream.write(formatDataStreamPart('reasoning', reasoning));
+    }
   }
 }
