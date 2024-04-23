@@ -9,6 +9,7 @@ import {
   ToolSet,
   Output,
   generateText,
+  Message as AIMessage,
 } from 'ai';
 
 import { getContextPrompt, RunFlowContext } from './context.js';
@@ -26,30 +27,36 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
 
   public abstract run(ctx: C): Promise<void>;
 
-  protected async streamChatHistory<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+  protected async streamChat<T extends GenericToolSet<C, P>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
     ctx: C
   ) {
-    const tools = this.getTools(agent.tools, ctx);
-    const systemPrompt = getContextPrompt(agent.systemPrompt, ctx);
-
-    const result = streamText({
-      model: agent.model,
-      system: systemPrompt,
-      tools,
-      experimental_transform: smoothStream({ chunking: 'word' }),
-      toolCallStreaming: agent.toolCallStreaming,
-      maxSteps: agent.maxSteps,
-      messages: ctx.history,
-      onFinish: this.options.onStreamChatFinish,
-      experimental_telemetry: agent.telemetry
-        ? { isEnabled: this.telemetry, functionId: 'stream-text' }
-        : undefined,
-    });
+    const result = await this.streamText(agent, ctx, ctx.history, this.options.onStreamChatFinish);
 
     result.consumeStream();
     ctx.writer?.mergeTextResult(result);
     return result;
+  }
+
+  private async streamText<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+    agent: LlmAgent<C, T, P>,
+    ctx: C,
+    messages: AIMessage[],
+    onFinish?: StreamTextOnFinishCallback<ToolSet>
+  ) {
+    return streamText({
+      model: agent.model,
+      system: getContextPrompt(agent.systemPrompt, ctx),
+      messages,
+      tools: this.getTools(agent.tools, ctx),
+      toolCallStreaming: agent.toolCallStreaming,
+      maxSteps: agent.maxSteps,
+      experimental_transform: smoothStream({ chunking: 'word' }),
+      onFinish,
+      experimental_telemetry: agent.telemetry
+        ? { isEnabled: this.telemetry, functionId: 'stream-text' }
+        : undefined,
+    });
   }
 
   protected createLlmTool<T extends GenericToolSet<C, P>, P extends ToolParameters>(
@@ -75,19 +82,15 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
             tools: this.getTools(agent.tools, ctx),
             maxSteps: agent.maxSteps,
             experimental_output: agent.output ? Output.object({ schema: agent.output }) : undefined,
-            // onFinish: ({ response }) => {
-            //   const finalMessages = appendResponseMessages({
-            //     messages,
-            //     responseMessages: response.messages,
-            //   }).slice(messages.length);
-            //   console.log('tool-call', agent.description);
-            //   console.dir(finalMessages, { depth: null });
-            // },
+            experimental_telemetry: agent.telemetry
+              ? { isEnabled: this.telemetry, functionId: 'stream-text' }
+              : undefined,
           });
 
           if (agent.output) {
             return result.experimental_output;
           }
+
           return { response: result.text, success: true };
         } catch (error) {
           console.error(`${agent.name ?? agent.description} tool error:`, error);
@@ -148,6 +151,6 @@ export class ToolingFlow<
   }
 
   public override async run(ctx: C): Promise<void> {
-    await this.streamChatHistory(this.agent, ctx);
+    await this.streamChat(this.agent, ctx);
   }
 }
