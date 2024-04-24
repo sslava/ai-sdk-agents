@@ -1,14 +1,10 @@
-import { LanguageModel, StreamTextOnFinishCallback, ToolSet, Message as AIMessage } from 'ai';
+import { LanguageModel, Message as AIMessage } from 'ai';
 import { Schema, z } from 'zod';
 
 import { GenericToolSet, inferParameters, ToolParameters } from './tools.js';
-import { RunFlowContext } from './context.js';
+import { Context } from './context.js';
 
-export class LlmAgent<
-  C extends RunFlowContext,
-  T extends GenericToolSet<C, P>,
-  P extends ToolParameters,
-> {
+export class LlmAgent<C extends Context, T extends GenericToolSet<C, P>, P extends ToolParameters> {
   public readonly isLlmAgent = true;
 
   public readonly output?: z.Schema<T, z.ZodTypeDef, any> | Schema<T>;
@@ -17,10 +13,9 @@ export class LlmAgent<
   public readonly description?: string;
   public readonly model: LanguageModel;
   public readonly tools?: T;
-  public readonly systemPrompt: string | ((ctx: C) => string);
+  public readonly system: string | ((ctx: C) => string);
   public readonly toolCallStreaming?: boolean;
   public readonly maxSteps?: number;
-  public readonly onStreamTextFinish?: StreamTextOnFinishCallback<ToolSet>;
 
   public readonly toolParams?: {
     input: P;
@@ -32,21 +27,19 @@ export class LlmAgent<
   constructor({
     name,
     description,
-    systemPrompt,
+    system,
     tools,
     toolCallStreaming = true,
     maxSteps,
     model,
     asTool,
-    onStreamTextFinish,
     telemetry = true,
   }: {
     name?: string;
     description?: string;
     model: LanguageModel;
     toolCallStreaming?: boolean;
-    onStreamTextFinish?: StreamTextOnFinishCallback<ToolSet>;
-    systemPrompt: string | ((ctx: C) => string);
+    system: string | ((ctx: C) => string);
     tools?: T;
     output?: z.Schema<T, z.ZodTypeDef, any> | Schema<T>;
     asTool?: {
@@ -58,12 +51,11 @@ export class LlmAgent<
   }) {
     this.name = name;
     this.description = description;
-    this.systemPrompt = systemPrompt;
+    this.system = system;
     this.tools = tools;
     this.model = model;
     this.toolCallStreaming = toolCallStreaming;
     this.maxSteps = maxSteps;
-    this.onStreamTextFinish = onStreamTextFinish;
     this.toolParams = asTool;
     this.telemetry = telemetry;
   }

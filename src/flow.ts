@@ -10,28 +10,38 @@ import {
   Output,
   generateText,
   Message as AIMessage,
+  StepResult,
 } from 'ai';
 
-import { getContextPrompt, RunFlowContext } from './context.js';
+import { Context, getContextPrompt, RunFlowContext } from './context.js';
 import { LlmAgent } from './agent.js';
 import { GenericToolSet, inferParameters, IToolFactory, ToolParameters } from './tools.js';
 
-type FlowOptions = {
-  onStreamChatFinish?: StreamTextOnFinishCallback<ToolSet>;
+export type StreamChatFinishCallback<C extends Context, TOOLS extends ToolSet> = (
+  event: Omit<StepResult<TOOLS>, 'stepType' | 'isContinued'> & {
+    readonly steps: StepResult<TOOLS>[];
+  },
+  ctx: RunFlowContext<C>
+) => Promise<void> | void;
+
+type FlowOptions<C extends Context> = {
+  onChatStreamFinish?: StreamChatFinishCallback<C, ToolSet>;
 };
 
-export abstract class BaseChatFlow<C extends RunFlowContext> {
+export abstract class BaseChatFlow<C extends Context> {
   protected readonly telemetry = process.env.NODE_ENV === 'production';
 
-  constructor(protected readonly options: FlowOptions) {}
+  constructor(protected readonly options: FlowOptions<C>) {}
 
   public abstract run(ctx: C): Promise<void>;
 
   protected async streamChat<T extends GenericToolSet<C, P>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
-    ctx: C
+    ctx: RunFlowContext<C>
   ) {
-    const result = await this.streamText(agent, ctx, ctx.history, this.options.onStreamChatFinish);
+    const result = await this.streamText(agent, ctx, ctx.ctx.history ?? [], (event) =>
+      this.options.onChatStreamFinish?.(event, ctx)
+    );
 
     result.consumeStream();
     ctx.writer?.mergeTextResult(result);
@@ -40,13 +50,13 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
 
   private async streamText<T extends GenericToolSet<C, P>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
-    ctx: C,
+    ctx: RunFlowContext<C>,
     messages: AIMessage[],
     onFinish?: StreamTextOnFinishCallback<ToolSet>
   ) {
     return streamText({
       model: agent.model,
-      system: getContextPrompt(agent.systemPrompt, ctx),
+      system: getContextPrompt(agent.system, ctx.ctx),
       messages,
       tools: this.getTools(agent.tools, ctx),
       toolCallStreaming: agent.toolCallStreaming,
@@ -61,7 +71,7 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
 
   protected createLlmTool<T extends GenericToolSet<C, P>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
-    ctx: C
+    ctx: RunFlowContext<C>
   ) {
     assert(agent.toolParams, 'toolParams is required');
     assert(agent.description, 'description is required');
@@ -77,7 +87,7 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
 
           const result = await generateText({
             model: agent.model,
-            system: getContextPrompt(agent.systemPrompt, ctx),
+            system: getContextPrompt(agent.system, ctx.ctx),
             messages: argsToMessages(args),
             tools: this.getTools(agent.tools, ctx),
             maxSteps: agent.maxSteps,
@@ -105,7 +115,7 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
 
   private getTools<T extends GenericToolSet<C, P>, P extends ToolParameters>(
     factories: T | undefined,
-    ctx: C
+    ctx: RunFlowContext<C>
   ) {
     if (!factories) {
       return undefined;
@@ -118,7 +128,7 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
   }
 
   private getTool<T extends GenericToolSet<C, P>, P extends ToolParameters>(
-    ctx: C,
+    ctx: RunFlowContext<C>,
     tool: Tool | LlmAgent<C, GenericToolSet<C, P>, P> | IToolFactory<C>
   ): Tool {
     const llmTool = tool as LlmAgent<C, T, P>;
@@ -134,7 +144,7 @@ export abstract class BaseChatFlow<C extends RunFlowContext> {
 }
 
 export class ToolingFlow<
-  C extends RunFlowContext,
+  C extends Context,
   T extends GenericToolSet<C, P>,
   P extends ToolParameters,
 > extends BaseChatFlow<C> {
@@ -143,14 +153,15 @@ export class ToolingFlow<
     agent,
     onFinish,
   }: {
-    onFinish?: StreamTextOnFinishCallback<ToolSet>;
+    onFinish?: StreamChatFinishCallback<C, ToolSet>;
     agent: LlmAgent<C, T, P>;
   }) {
-    super({ onStreamChatFinish: onFinish });
+    super({ onChatStreamFinish: onFinish });
     this.agent = agent;
   }
 
   public override async run(ctx: C): Promise<void> {
-    await this.streamChat(this.agent, ctx);
+    const runCtx = new RunFlowContext<C>(ctx);
+    await this.streamChat(this.agent, runCtx);
   }
 }
