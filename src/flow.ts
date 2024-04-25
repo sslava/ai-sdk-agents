@@ -11,6 +11,9 @@ import {
   generateText,
   Message as AIMessage,
   StepResult,
+  StreamTextOnStepFinishCallback,
+  GenerateTextOnStepFinishCallback,
+  generateObject,
 } from 'ai';
 
 import { Context, getContextPrompt, RunFlowContext } from './context.js';
@@ -39,7 +42,7 @@ export abstract class BaseChatFlow<C extends Context> {
     agent: LlmAgent<C, T, P>,
     ctx: RunFlowContext<C>
   ) {
-    const result = await this.streamText(agent, ctx, ctx.ctx.history ?? [], (event) =>
+    const result = await this.agentStreamText(agent, ctx, ctx.ctx.history ?? [], (event) =>
       this.options.onChatStreamFinish?.(event, ctx)
     );
 
@@ -48,11 +51,12 @@ export abstract class BaseChatFlow<C extends Context> {
     return result;
   }
 
-  private async streamText<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+  protected async agentStreamText<T extends GenericToolSet<C, P>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
     ctx: RunFlowContext<C>,
     messages: AIMessage[],
-    onFinish?: StreamTextOnFinishCallback<ToolSet>
+    onFinish?: StreamTextOnFinishCallback<ToolSet>,
+    onStepFinish?: StreamTextOnStepFinishCallback<ToolSet>
   ) {
     return streamText({
       model: agent.model,
@@ -63,9 +67,44 @@ export abstract class BaseChatFlow<C extends Context> {
       maxSteps: agent.maxSteps,
       experimental_transform: smoothStream({ chunking: 'word' }),
       onFinish,
-      experimental_telemetry: agent.telemetry
-        ? { isEnabled: this.telemetry, functionId: 'stream-text' }
-        : undefined,
+      onStepFinish,
+      experimental_telemetry: this.getTelemetry(agent),
+    });
+  }
+
+  protected async agentGenerateText<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+    agent: LlmAgent<C, T, P>,
+    ctx: RunFlowContext<C>,
+    messages: AIMessage[],
+    onStepFinish?: GenerateTextOnStepFinishCallback<ToolSet>
+  ) {
+    return generateText({
+      model: agent.model,
+      system: getContextPrompt(agent.system, ctx.ctx),
+      messages,
+      tools: this.getTools(agent.tools, ctx),
+      maxSteps: agent.maxSteps,
+      onStepFinish,
+      experimental_output: agent.output ? Output.object({ schema: agent.output }) : undefined,
+      experimental_telemetry: this.getTelemetry(agent),
+    });
+  }
+
+  protected agentGenerateObject<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+    agent: LlmAgent<C, T, P>,
+    ctx: RunFlowContext<C>,
+    messages?: AIMessage[],
+    prompt?: string
+  ) {
+    assert(agent.output, 'output is required');
+
+    return generateObject({
+      model: agent.model,
+      system: getContextPrompt(agent.system, ctx.ctx),
+      messages,
+      prompt,
+      schema: agent.output,
+      experimental_telemetry: this.getTelemetry(agent),
     });
   }
 
@@ -85,17 +124,17 @@ export abstract class BaseChatFlow<C extends Context> {
         try {
           ctx.writer?.reasoning(args.reasoning);
 
-          const result = await generateText({
-            model: agent.model,
-            system: getContextPrompt(agent.system, ctx.ctx),
-            messages: argsToMessages(args),
-            tools: this.getTools(agent.tools, ctx),
-            maxSteps: agent.maxSteps,
-            experimental_output: agent.output ? Output.object({ schema: agent.output }) : undefined,
-            experimental_telemetry: agent.telemetry
-              ? { isEnabled: this.telemetry, functionId: 'stream-text' }
-              : undefined,
-          });
+          // tools count
+          const toolCount = Object.keys(agent.tools ?? {}).length;
+
+          // if no tools and output is defined, use generateObject
+          if (!toolCount && agent.output) {
+            const { object } = await this.agentGenerateObject(agent, ctx, argsToMessages(args));
+            return object;
+          }
+
+          // if tools are required, use generateText
+          const result = await this.agentGenerateText(agent, ctx, argsToMessages(args));
 
           if (agent.output) {
             return result.experimental_output;
@@ -140,6 +179,14 @@ export abstract class BaseChatFlow<C extends Context> {
       return factory.createTool(ctx);
     }
     return tool as Tool;
+  }
+
+  private getTelemetry<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+    agent: LlmAgent<C, T, P>
+  ) {
+    return agent.telemetry
+      ? { isEnabled: this.telemetry, functionId: 'generate-object' }
+      : undefined;
   }
 }
 
