@@ -17,7 +17,8 @@ export class RunFlowContext<C extends Context> {
     this.ctx = ctx;
     this.writer = new VercelStreamWriter(ctx.dataStream);
   }
-  public onAgentFinish(messages: AIMessage[]) {
+
+  public appendMessages(messages: AIMessage[]) {
     this.messages.push(...messages);
   }
 }

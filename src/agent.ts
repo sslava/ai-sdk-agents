@@ -4,6 +4,8 @@ import { Schema, z } from 'zod';
 import { GenericToolSet, inferParameters, ToolParameters } from './tools.js';
 import { Context } from './context.js';
 
+export type PromptType = { messages?: AIMessage[]; prompt?: string };
+
 export class LlmAgent<C extends Context, T extends GenericToolSet<C, P>, P extends ToolParameters> {
   public readonly isLlmAgent = true;
 
@@ -19,7 +21,7 @@ export class LlmAgent<C extends Context, T extends GenericToolSet<C, P>, P exten
 
   public readonly toolParams?: {
     input: P;
-    argsToMessages: (args: inferParameters<P>) => AIMessage[];
+    getPrompt: (args: inferParameters<P>) => PromptType;
   };
 
   public readonly telemetry?: boolean;
@@ -44,7 +46,7 @@ export class LlmAgent<C extends Context, T extends GenericToolSet<C, P>, P exten
     output?: z.Schema<T, z.ZodTypeDef, any> | Schema<T>;
     asTool?: {
       input: P;
-      argsToMessages: (args: inferParameters<P>) => AIMessage[];
+      getPrompt: (args: inferParameters<P>) => PromptType;
     };
     maxSteps?: number;
     telemetry?: boolean;

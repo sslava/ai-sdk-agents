@@ -17,7 +17,7 @@ import {
 } from 'ai';
 
 import { Context, getContextPrompt, RunFlowContext } from './context.js';
-import { LlmAgent } from './agent.js';
+import { LlmAgent, PromptType } from './agent.js';
 import { GenericToolSet, inferParameters, IToolFactory, ToolParameters } from './tools.js';
 
 export type StreamChatFinishCallback<C extends Context, TOOLS extends ToolSet> = (
@@ -75,13 +75,13 @@ export abstract class BaseChatFlow<C extends Context> {
   protected async agentGenerateText<T extends GenericToolSet<C, P>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
     ctx: RunFlowContext<C>,
-    messages: AIMessage[],
+    prompt: PromptType,
     onStepFinish?: GenerateTextOnStepFinishCallback<ToolSet>
   ) {
     return generateText({
       model: agent.model,
       system: getContextPrompt(agent.system, ctx.ctx),
-      messages,
+      ...prompt,
       tools: this.getTools(agent.tools, ctx),
       maxSteps: agent.maxSteps,
       onStepFinish,
@@ -93,16 +93,14 @@ export abstract class BaseChatFlow<C extends Context> {
   protected agentGenerateObject<T extends GenericToolSet<C, P>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
     ctx: RunFlowContext<C>,
-    messages?: AIMessage[],
-    prompt?: string
+    prompt: PromptType
   ) {
     assert(agent.output, 'output is required');
 
     return generateObject({
       model: agent.model,
       system: getContextPrompt(agent.system, ctx.ctx),
-      messages,
-      prompt,
+      ...prompt,
       schema: agent.output,
       experimental_telemetry: this.getTelemetry(agent),
     });
@@ -115,7 +113,7 @@ export abstract class BaseChatFlow<C extends Context> {
     assert(agent.toolParams, 'toolParams is required');
     assert(agent.description, 'description is required');
 
-    const { input, argsToMessages } = agent.toolParams;
+    const { input, getPrompt } = agent.toolParams;
 
     return tool({
       description: agent.description,
@@ -129,12 +127,12 @@ export abstract class BaseChatFlow<C extends Context> {
 
           // if no tools and output is defined, use generateObject
           if (!toolCount && agent.output) {
-            const { object } = await this.agentGenerateObject(agent, ctx, argsToMessages(args));
+            const { object } = await this.agentGenerateObject(agent, ctx, getPrompt(args));
             return object;
           }
 
           // if tools are required, use generateText
-          const result = await this.agentGenerateText(agent, ctx, argsToMessages(args));
+          const result = await this.agentGenerateText(agent, ctx, getPrompt(args));
 
           if (agent.output) {
             return result.experimental_output;
