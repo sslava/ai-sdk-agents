@@ -31,19 +31,28 @@ type FlowOptions<C extends Context> = {
   onChatStreamFinish?: StreamChatFinishCallback<C, ToolSet>;
 };
 
-export abstract class BaseChatFlow<C extends Context> {
+export abstract class AgentFlow<C extends Context> {
   protected readonly telemetry = process.env.NODE_ENV === 'production';
 
   constructor(protected readonly options: FlowOptions<C>) {}
 
   public abstract run(ctx: C): Promise<void>;
 
-  protected async streamChat<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+  protected async streamChat<T extends GenericToolSet<C>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
     ctx: RunFlowContext<C>
   ) {
-    const result = await this.agentStreamText(agent, ctx, ctx.ctx.history ?? [], (event) =>
-      this.options.onChatStreamFinish?.(event, ctx)
+    const result = await this.agentStreamText(
+      agent,
+      ctx,
+      ctx.inner.history ?? [],
+      (event) => this.options.onChatStreamFinish?.(event, ctx),
+      (event) => {
+        const { response: _, request: __, ...rest } = event;
+        console.log('step finish----------------------------------------------------------');
+        console.dir(rest, { depth: null });
+        console.log('//-------------------------------------------------------------------');
+      }
     );
 
     result.consumeStream();
@@ -51,7 +60,7 @@ export abstract class BaseChatFlow<C extends Context> {
     return result;
   }
 
-  protected async agentStreamText<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+  protected async agentStreamText<T extends GenericToolSet<C>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
     ctx: RunFlowContext<C>,
     messages: AIMessage[],
@@ -60,7 +69,7 @@ export abstract class BaseChatFlow<C extends Context> {
   ) {
     return streamText({
       model: agent.model,
-      system: getContextPrompt(agent.system, ctx.ctx),
+      system: getContextPrompt(agent.system, ctx),
       messages,
       tools: this.getTools(agent.tools, ctx),
       toolCallStreaming: agent.toolCallStreaming,
@@ -72,7 +81,7 @@ export abstract class BaseChatFlow<C extends Context> {
     });
   }
 
-  protected async agentGenerateText<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+  protected async agentGenerateText<T extends GenericToolSet<C>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
     ctx: RunFlowContext<C>,
     prompt: PromptType,
@@ -80,7 +89,7 @@ export abstract class BaseChatFlow<C extends Context> {
   ) {
     return generateText({
       model: agent.model,
-      system: getContextPrompt(agent.system, ctx.ctx),
+      system: getContextPrompt(agent.system, ctx),
       ...prompt,
       tools: this.getTools(agent.tools, ctx),
       maxSteps: agent.maxSteps,
@@ -90,7 +99,7 @@ export abstract class BaseChatFlow<C extends Context> {
     });
   }
 
-  protected agentGenerateObject<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+  protected agentGenerateObject<T extends GenericToolSet<C>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
     ctx: RunFlowContext<C>,
     prompt: PromptType
@@ -99,29 +108,27 @@ export abstract class BaseChatFlow<C extends Context> {
 
     return generateObject({
       model: agent.model,
-      system: getContextPrompt(agent.system, ctx.ctx),
+      system: getContextPrompt(agent.system, ctx),
       ...prompt,
       schema: agent.output,
       experimental_telemetry: this.getTelemetry(agent),
     });
   }
 
-  protected createLlmTool<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+  protected createLlmTool<T extends GenericToolSet<C>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
     ctx: RunFlowContext<C>
   ) {
-    assert(agent.toolParams, 'toolParams is required');
+    assert(agent.asTool, 'toolParams is required');
     assert(agent.description, 'description is required');
 
-    const { input, getPrompt } = agent.toolParams;
+    const { input, getPrompt } = agent.asTool;
 
     return tool({
       description: agent.description,
       parameters: input,
       execute: async (args: inferParameters<P> & { reasoning?: string }) => {
         try {
-          ctx.writer?.reasoning(args.reasoning);
-
           // tools count
           const toolCount = Object.keys(agent.tools ?? {}).length;
 
@@ -132,7 +139,12 @@ export abstract class BaseChatFlow<C extends Context> {
           }
 
           // if tools are required, use generateText
-          const result = await this.agentGenerateText(agent, ctx, getPrompt(args));
+          const result = await this.agentGenerateText(agent, ctx, getPrompt(args), (event) => {
+            const { response: _, request: __, ...rest } = event;
+            console.log('inner step finish------------------------------------------------------');
+            console.dir(rest, { depth: null });
+            console.log('//------------------------------------------------------------------');
+          });
 
           if (agent.output) {
             return result.experimental_output;
@@ -150,10 +162,7 @@ export abstract class BaseChatFlow<C extends Context> {
     });
   }
 
-  private getTools<T extends GenericToolSet<C, P>, P extends ToolParameters>(
-    factories: T | undefined,
-    ctx: RunFlowContext<C>
-  ) {
+  private getTools<T extends GenericToolSet<C>>(factories: T | undefined, ctx: RunFlowContext<C>) {
     if (!factories) {
       return undefined;
     }
@@ -164,9 +173,9 @@ export abstract class BaseChatFlow<C extends Context> {
     return tools;
   }
 
-  private getTool<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+  private getTool<T extends GenericToolSet<C>, P extends ToolParameters>(
     ctx: RunFlowContext<C>,
-    tool: Tool | LlmAgent<C, GenericToolSet<C, P>, P> | IToolFactory<C>
+    tool: Tool | LlmAgent<C, GenericToolSet<C>, P> | IToolFactory<C>
   ): Tool {
     const llmTool = tool as LlmAgent<C, T, P>;
     if (llmTool.isLlmAgent) {
@@ -179,7 +188,7 @@ export abstract class BaseChatFlow<C extends Context> {
     return tool as Tool;
   }
 
-  private getTelemetry<T extends GenericToolSet<C, P>, P extends ToolParameters>(
+  private getTelemetry<T extends GenericToolSet<C>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>
   ) {
     return agent.telemetry
@@ -190,9 +199,9 @@ export abstract class BaseChatFlow<C extends Context> {
 
 export class ToolingFlow<
   C extends Context,
-  T extends GenericToolSet<C, P>,
+  T extends GenericToolSet<C>,
   P extends ToolParameters,
-> extends BaseChatFlow<C> {
+> extends AgentFlow<C> {
   protected readonly agent: LlmAgent<C, T, P>;
   constructor({
     agent,
