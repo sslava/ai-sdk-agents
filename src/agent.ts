@@ -15,6 +15,7 @@ export type LlmAgent<C extends Context, T extends GenericToolSet<C>, P extends T
   toolCallStreaming?: boolean;
   system: string | ((ctx: C) => string);
   tools?: T;
+  toolChoice?: z.infer<typeof toolChoiceSchema>;
   output?: z.Schema<T, z.ZodTypeDef, any> | Schema<T>;
   asTool?: {
     input: P;
@@ -50,3 +51,11 @@ export const toolCallReasoningParameter = {
       'Provide explanation for the tool call in for of progress. for example: "analyzing user profile" or "searching for relevant information"'
     ),
 };
+
+export const toolChoiceSchema = z.union([
+  z.enum(['auto', 'required', 'none']),
+  z.object({
+    type: z.literal('tool'),
+    toolName: z.string(),
+  }),
+]);

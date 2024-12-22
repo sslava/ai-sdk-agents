@@ -1,7 +1,7 @@
 import { Tool } from 'ai';
 import { z, Schema } from 'zod';
 import { LlmAgent } from './agent.js';
-import { Context, RunFlowContext } from './context.js';
+import { Context, IRunContext } from './context.js';
 
 export type ToolParameters = z.ZodTypeAny | Schema<any>;
 
@@ -17,5 +17,5 @@ export type ToolEntry<C extends Context> = Tool | LlmAgent<C, any, any> | IToolF
 export type GenericToolSet<C extends Context> = Record<string, ToolEntry<C>>;
 
 export type IToolFactory<C extends Context> = {
-  createTool: (ctx: RunFlowContext<C>) => Tool;
+  createTool: (ctx: IRunContext<C>) => Tool;
 };

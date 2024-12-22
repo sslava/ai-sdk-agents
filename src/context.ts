@@ -14,12 +14,14 @@ export interface IRunContext<C extends Context> {
   get history(): AIMessage[] | undefined;
 
   step(): IRunContext<C>;
+
+  setData(data: Record<string, unknown>): void;
 }
 
 class RunStepContext<C extends Context> implements IRunContext<C> {
   public readonly steps: RunStepContext<C>[] = [];
 
-  public readonly data: Record<string, unknown> = {};
+  public data: Record<string, unknown> = {};
 
   public get history(): AIMessage[] | undefined {
     return this.context.history;
@@ -40,12 +42,18 @@ class RunStepContext<C extends Context> implements IRunContext<C> {
     this.steps.push(step);
     return step;
   }
+
+  public setData(data: Record<string, unknown>): void {
+    this.data = data;
+  }
 }
 
 export class RunFlowContext<C extends Context> implements IRunContext<C> {
   public writer: VercelStreamWriter;
 
   public messages: AIMessage[] = [];
+
+  public responseMessages: AIMessage[] = [];
 
   public readonly inner: C;
 
@@ -65,4 +73,6 @@ export class RunFlowContext<C extends Context> implements IRunContext<C> {
   public get history(): AIMessage[] | undefined {
     return this.inner.history;
   }
+
+  public setData(_: Record<string, unknown>): void {}
 }

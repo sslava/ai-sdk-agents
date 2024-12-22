@@ -37,8 +37,6 @@ export abstract class AgentFlow<C extends Context> {
 
   constructor(protected readonly options: FlowOptions<C>) {}
 
-  public abstract run(ctx: C): Promise<IRunContext<C>>;
-
   protected async streamChat<T extends GenericToolSet<C>, P extends ToolParameters>(
     agent: LlmAgent<C, T, P>,
     ctx: IRunContext<C>
@@ -57,7 +55,10 @@ export abstract class AgentFlow<C extends Context> {
     );
 
     result.consumeStream();
-    ctx.writer?.mergeTextResult(result);
+    ctx.writer.mergeTextResult(result);
+
+    ctx.setData({ steps: result.steps });
+
     return result;
   }
 
@@ -72,11 +73,11 @@ export abstract class AgentFlow<C extends Context> {
       model: agent.model,
       system: getContextPrompt(agent.system, ctx),
       messages,
-      tools: this.getTools(agent.tools, ctx.step()),
+      tools: this.getTools(agent.tools, ctx),
+      toolChoice: agent.toolChoice,
       toolCallStreaming: agent.toolCallStreaming,
       maxSteps: agent.maxSteps,
       experimental_transform: smoothStream({ chunking: 'word' }),
-      experimental_generateMessageId: generateUUID,
       onFinish,
       onStepFinish,
       experimental_telemetry: this.getTelemetry(agent),
@@ -94,6 +95,7 @@ export abstract class AgentFlow<C extends Context> {
       system: getContextPrompt(agent.system, ctx),
       ...prompt,
       tools: this.getTools(agent.tools, ctx),
+      toolChoice: agent.toolChoice,
       maxSteps: agent.maxSteps,
       onStepFinish,
       experimental_output: agent.output ? Output.object({ schema: agent.output }) : undefined,
@@ -164,28 +166,31 @@ export abstract class AgentFlow<C extends Context> {
     });
   }
 
-  private getTools<T extends GenericToolSet<C>>(factories: T | undefined, ctx: IRunContext<C>) {
+  private getTools<T extends GenericToolSet<C>>(
+    factories: T | undefined,
+    parentContext: IRunContext<C>
+  ) {
     if (!factories) {
       return undefined;
     }
     const tools: ToolSet = {};
     for (const [key, tool] of Object.entries(factories)) {
-      tools[key] = this.getTool(ctx, tool);
+      tools[key] = this.getTool(parentContext, tool);
     }
     return tools;
   }
 
   private getTool<T extends GenericToolSet<C>, P extends ToolParameters>(
-    ctx: IRunContext<C>,
+    parentContext: IRunContext<C>,
     tool: Tool | LlmAgent<C, GenericToolSet<C>, P> | IToolFactory<C>
   ): Tool {
     const llmTool = tool as LlmAgent<C, T, P>;
     if (llmTool.isLlmAgent) {
-      return this.createLlmTool(llmTool, ctx);
+      return this.createLlmTool(llmTool, parentContext.step());
     }
     const factory = tool as IToolFactory<C>;
     if (factory.createTool) {
-      return factory.createTool(ctx);
+      return factory.createTool(parentContext.step());
     }
     return tool as Tool;
   }
