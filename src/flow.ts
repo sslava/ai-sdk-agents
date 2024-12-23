@@ -37,10 +37,7 @@ export abstract class AgentFlow<C extends Context> {
 
   constructor(protected readonly options: FlowOptions<C>) {}
 
-  protected async streamChat<T extends GenericToolSet<C>, P extends ToolParameters>(
-    agent: LlmAgent<C, T, P>,
-    ctx: IRunContext<C>
-  ) {
+  protected async streamChat<P extends ToolParameters>(agent: LlmAgent<C, P>, ctx: IRunContext<C>) {
     const result = await this.agentStreamText(
       agent,
       ctx,
@@ -62,8 +59,8 @@ export abstract class AgentFlow<C extends Context> {
     return result;
   }
 
-  protected async agentStreamText<T extends GenericToolSet<C>, P extends ToolParameters>(
-    agent: LlmAgent<C, T, P>,
+  protected async agentStreamText<P extends ToolParameters>(
+    agent: LlmAgent<C, P>,
     ctx: IRunContext<C>,
     messages: AIMessage[],
     onFinish?: StreamTextOnFinishCallback<ToolSet>,
@@ -84,8 +81,8 @@ export abstract class AgentFlow<C extends Context> {
     });
   }
 
-  protected async agentGenerateText<T extends GenericToolSet<C>, P extends ToolParameters>(
-    agent: LlmAgent<C, T, P>,
+  protected async agentGenerateText<P extends ToolParameters>(
+    agent: LlmAgent<C, P>,
     ctx: IRunContext<C>,
     prompt: PromptType,
     onStepFinish?: GenerateTextOnStepFinishCallback<ToolSet>
@@ -103,8 +100,8 @@ export abstract class AgentFlow<C extends Context> {
     });
   }
 
-  protected agentGenerateObject<T extends GenericToolSet<C>, P extends ToolParameters>(
-    agent: LlmAgent<C, T, P>,
+  protected agentGenerateObject<P extends ToolParameters>(
+    agent: LlmAgent<C, P>,
     ctx: IRunContext<C>,
     prompt: PromptType
   ) {
@@ -119,10 +116,7 @@ export abstract class AgentFlow<C extends Context> {
     });
   }
 
-  protected createLlmTool<T extends GenericToolSet<C>, P extends ToolParameters>(
-    agent: LlmAgent<C, T, P>,
-    ctx: IRunContext<C>
-  ) {
+  protected createLlmTool<P extends ToolParameters>(agent: LlmAgent<C, P>, ctx: IRunContext<C>) {
     assert(agent.asTool, 'toolParams is required');
     assert(agent.description, 'description is required');
 
@@ -180,11 +174,11 @@ export abstract class AgentFlow<C extends Context> {
     return tools;
   }
 
-  private getTool<T extends GenericToolSet<C>, P extends ToolParameters>(
+  private getTool<P extends ToolParameters>(
     parentContext: IRunContext<C>,
-    tool: Tool | LlmAgent<C, GenericToolSet<C>, P> | IToolFactory<C>
+    tool: Tool | LlmAgent<C, P> | IToolFactory<C>
   ): Tool {
-    const llmTool = tool as LlmAgent<C, T, P>;
+    const llmTool = tool as LlmAgent<C, P>;
     if (llmTool.isLlmAgent) {
       return this.createLlmTool(llmTool, parentContext.step());
     }
@@ -199,9 +193,7 @@ export abstract class AgentFlow<C extends Context> {
     return new RunFlowContext<C>(ctx);
   }
 
-  private getTelemetry<T extends GenericToolSet<C>, P extends ToolParameters>(
-    agent: LlmAgent<C, T, P>
-  ) {
+  private getTelemetry<P extends ToolParameters>(agent: LlmAgent<C, P>) {
     return agent.telemetry
       ? { isEnabled: this.telemetry, functionId: 'generate-object' }
       : undefined;

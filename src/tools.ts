@@ -12,7 +12,7 @@ export type inferParameters<PARAMETERS extends ToolParameters> =
       ? z.infer<PARAMETERS>
       : never;
 
-export type ToolEntry<C extends Context> = Tool | LlmAgent<C, any, any> | IToolFactory<C>;
+export type ToolEntry<C extends Context> = Tool | LlmAgent<C, any> | IToolFactory<C>;
 
 export type GenericToolSet<C extends Context> = Record<string, ToolEntry<C>>;
 
