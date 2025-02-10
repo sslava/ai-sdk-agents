@@ -43,14 +43,6 @@ export function agent<C extends Context, P extends ToolParameters>({
   };
 }
 
-export const toolCallReasoningParameter = {
-  reasoning: z
-    .string()
-    .describe(
-      'Provide explanation for the tool call in for of progress. for example: "analyzing user profile" or "searching for relevant information"'
-    ),
-};
-
 export const toolChoiceSchema = z.union([
   z.enum(['auto', 'required', 'none']),
   z.object({

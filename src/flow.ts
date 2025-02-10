@@ -1,5 +1,3 @@
-import assert from 'node:assert';
-
 import {
   smoothStream,
   streamText,
@@ -14,12 +12,14 @@ import {
   StreamTextOnStepFinishCallback,
   GenerateTextOnStepFinishCallback,
   generateObject,
+  generateId,
 } from 'ai';
 
 import { Context, IRunContext, RunFlowContext } from './context.js';
 import { LlmAgent, PromptType } from './agent.js';
+
 import { GenericToolSet, inferParameters, IToolFactory, ToolParameters } from './tools.js';
-import { getContextPrompt } from './shared.js';
+import { getContextPrompt } from './prompt.js';
 
 export type StreamChatFinishCallback<C extends Context, TOOLS extends ToolSet> = (
   event: Omit<StepResult<TOOLS>, 'stepType' | 'isContinued'> & {
@@ -30,12 +30,14 @@ export type StreamChatFinishCallback<C extends Context, TOOLS extends ToolSet> =
 
 type FlowOptions<C extends Context> = {
   onChatStreamFinish?: StreamChatFinishCallback<C, ToolSet>;
+  telemetry?: boolean;
 };
 
 export abstract class AgentFlow<C extends Context> {
-  protected readonly telemetry = process.env.NODE_ENV === 'production';
-
-  constructor(protected readonly options: FlowOptions<C>) {}
+  constructor(
+    protected readonly options: FlowOptions<C>,
+    protected readonly generateUUID = generateId
+  ) {}
 
   protected async streamChat<P extends ToolParameters>(agent: LlmAgent<C, P>, ctx: IRunContext<C>) {
     const result = await this.agentStreamText(
@@ -45,9 +47,7 @@ export abstract class AgentFlow<C extends Context> {
       (event) => this.options.onChatStreamFinish?.(event, ctx),
       (event) => {
         const { response: _, request: __, ...rest } = event;
-        console.log('step finish----------------------------------------------------------');
         console.dir(rest, { depth: null });
-        console.log('//-------------------------------------------------------------------');
       }
     );
 
@@ -75,6 +75,7 @@ export abstract class AgentFlow<C extends Context> {
       toolCallStreaming: agent.toolCallStreaming,
       maxSteps: agent.maxSteps,
       experimental_transform: smoothStream({ chunking: 'word' }),
+      experimental_generateMessageId: this.generateUUID,
       onFinish,
       onStepFinish,
       experimental_telemetry: this.getTelemetry(agent),
@@ -95,6 +96,7 @@ export abstract class AgentFlow<C extends Context> {
       toolChoice: agent.toolChoice,
       maxSteps: agent.maxSteps,
       onStepFinish,
+      experimental_generateMessageId: this.generateUUID,
       experimental_output: agent.output ? Output.object({ schema: agent.output }) : undefined,
       experimental_telemetry: this.getTelemetry(agent),
     });
@@ -105,7 +107,9 @@ export abstract class AgentFlow<C extends Context> {
     ctx: IRunContext<C>,
     prompt: PromptType
   ) {
-    assert(agent.output, 'output is required');
+    if (!agent.output) {
+      throw new Error('output is required');
+    }
 
     return generateObject({
       model: agent.model,
@@ -117,8 +121,9 @@ export abstract class AgentFlow<C extends Context> {
   }
 
   protected createLlmTool<P extends ToolParameters>(agent: LlmAgent<C, P>, ctx: IRunContext<C>) {
-    assert(agent.asTool, 'toolParams is required');
-    assert(agent.description, 'description is required');
+    if (!agent.asTool || !agent.description) {
+      throw new Error('toolParams and description are required');
+    }
 
     const { input, getPrompt } = agent.asTool;
 
@@ -195,7 +200,7 @@ export abstract class AgentFlow<C extends Context> {
 
   private getTelemetry<P extends ToolParameters>(agent: LlmAgent<C, P>) {
     return agent.telemetry
-      ? { isEnabled: this.telemetry, functionId: 'generate-object' }
+      ? { isEnabled: !!this.options.telemetry, functionId: 'generate-object' }
       : undefined;
   }
 }

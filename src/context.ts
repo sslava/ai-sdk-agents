@@ -1,5 +1,10 @@
-import { Message as AIMessage, DataStreamWriter } from 'ai';
+import { Message as AIMessage, CoreAssistantMessage, CoreToolMessage, DataStreamWriter } from 'ai';
+
 import { VercelStreamWriter } from './stream.js';
+
+export type AIResponseMessage = (CoreAssistantMessage | CoreToolMessage) & {
+  id: string;
+};
 
 export type Context = {
   readonly dataStream?: DataStreamWriter;
@@ -53,7 +58,7 @@ export class RunFlowContext<C extends Context> implements IRunContext<C> {
 
   public messages: AIMessage[] = [];
 
-  public responseMessages: AIMessage[] = [];
+  public responseMessages: AIResponseMessage[] = [];
 
   public readonly inner: C;
 
