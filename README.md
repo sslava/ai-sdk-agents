@@ -77,15 +77,16 @@ const { result } = await flow.run(ctx);
 
 ```
 src/
-├── agent.ts          # Core agent implementation
-├── context.ts        # Context management
-├── flow.ts            # Flow control and management
-├── flows/             # Predefined flow implementations
-│   └── chat-flow.ts   # Chat flow implementation
-├── index.ts          # Main entry point
-├── prompt.ts         # Prompt handling
-├── stream.ts         # Streaming functionality
-└── tools.ts          # Tool definitions
+├── agent.ts           # Core agent implementation
+├── context.ts         # Context management
+├── flow.ts             # Flow control and management
+├── flows/              # Predefined flow implementations
+│   └── chat-flow.ts    # Chat flow implementation
+├── index.ts           # Main entry point
+├── tools.ts           # Tool definitions
+├── types.ts           # Type definitions
+├── utils.ts           # Utility functions
+└── prompts.ts         # Prompt handling
 ```
 
 ## Development
