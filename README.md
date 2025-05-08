@@ -1,6 +1,7 @@
 # AI SDK Simple Agents
 
 [![NPM version](https://img.shields.io/npm/v/ai-sdk-agents.svg)](https://npmjs.org/package/ai-sdk-agents)
+[![Actions Status][actions-badge]][actions-url]
 A powerful and flexible library for building AI agents using the Vercel AI SDK. This project provides a simple yet powerful way to create and manage AI agents with customizable flows, tools, and contexts.
 
 ## Features
