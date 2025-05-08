@@ -37,17 +37,43 @@ pnpm add ai
 Here's a basic example of how to use the library:
 
 ```typescript
-import { agent } from 'ai-sdk-simple-agents';
-import { ChatFlow } from 'ai-sdk-simple-agents/flows/chat-flow';
 
-const myAgent = agent({
-  // Your agent configuration
+
+import { agent, ChatFlow, Context } from 'ai-sdk-simple-agents';
+import { openai } from '@ai-sdk/openai';
+
+export type PlannerContext = Context & {
+  today: string;
+};
+
+const sqlAgent = agent({
+  model: openai('gpt-4o'),
+  system: (ctx: PlannerContext) => plannerPrompt(ctx.today),
+  description: "This agent can help you write SQL queries",
+  tools: { sqlExecutor: sqlExecutorTool },
+  asTool: {
+  input: z.object({
+    question: z.string().describe('The user query to analyze'),
+  }),
+  getPrompt: ({ question, }) => ({
+    prompt: `question: ${question}.
+      - Make sure you return no more than 200 rows of data.`,
+    }),  
+  },
 });
 
-const flow = new ChatFlow({ agent: myAgent });
-const { context, result } = await flow.run({
-  // Your input context
+export const routerAgent = agent({
+  system: (ctx: InsightContext) => routerPrompt(ctx),
+  model: openai('gpt-4o'),
+  maxSteps: 5,
+  tools: { sqlAgent },
+  toolChoice: 'auto',
 });
+
+const flow = new ChatFlow({ agent: routerAgent });
+const ctx = { history: [],today: new Date().toISOString().split('T')[0] };
+const { result } = await flow.run(ctx);
+
 ```
 
 ## Project Structure
@@ -72,14 +98,14 @@ src/
 1. Clone the repository
 2. Install dependencies:
    ```bash
-   pnpm install
+   yarn install
    ```
 
 ### Available Scripts
 
-- `pnpm test` - Run tests using Vitest
-- `pnpm lint` - Run ESLint with auto-fix
-- `pnpm format` - Format code using Prettier
+- `yarn test` - Run tests using Vitest
+- `yarn lint` - Run ESLint with auto-fix
+- `yarn format` - Format code using Prettier
 
 
 ### Tests
@@ -102,6 +128,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## Acknowledgments
 
 - Built on top of the [Vercel AI SDK](https://sdk.vercel.ai/docs)
+- Heavily inspired by (openai agent framework)[https://github.com/openai/openai-agents-python]
 - Uses [Vitest](https://vitest.dev/) for testing
 
 #TODO:
