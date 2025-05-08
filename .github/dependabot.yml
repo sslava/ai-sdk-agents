@@ -1,34 +1,34 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: ".github/workflows"
+  - package-ecosystem: 'github-actions'
+    directory: '.github/workflows'
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
     commit-message:
       # Prefix all commit messages with "chore: "
-      prefix: "chore"
+      prefix: 'chore'
     open-pull-requests-limit: 10
 
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     commit-message:
       # Prefix all commit messages with "chore: "
-      prefix: "chore"
+      prefix: 'chore'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     open-pull-requests-limit: 10
     groups:
       # Production dependencies without breaking changes
       dependencies:
-        dependency-type: "production"
+        dependency-type: 'production'
         update-types:
-        - "minor"
-        - "patch"
+          - 'minor'
+          - 'patch'
       # Production dependencies with breaking changes
       dependencies-major:
-        dependency-type: "production"
+        dependency-type: 'production'
         update-types:
-        - "major"
+          - 'major'
       # Development dependencies
       dev-dependencies:
-        dependency-type: "development"
+        dependency-type: 'development'

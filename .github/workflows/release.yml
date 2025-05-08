@@ -10,11 +10,11 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 jobs:
   release:
     permissions:
-      contents: write       # to create release (changesets/action)
-      issues: write         # to post issue comments (changesets/action)
-      pull-requests: write  # to create pull request (changesets/action)
-      id-token: write       # to create release (changesets/action)
-      packages: write       # to publish to npm (changesets/action)
+      contents: write # to create release (changesets/action)
+      issues: write # to post issue comments (changesets/action)
+      pull-requests: write # to create pull request (changesets/action)
+      id-token: write # to create release (changesets/action)
+      packages: write # to publish to npm (changesets/action)
     timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
@@ -31,8 +31,8 @@ jobs:
         with:
           publish: npm run release
           version: npm run version
-          commit: "chore: new release"
-          title: "chore: new release candidate"
+          commit: 'chore: new release'
+          title: 'chore: new release candidate'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

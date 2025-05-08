@@ -37,8 +37,6 @@ pnpm add ai
 Here's a basic example of how to use the library:
 
 ```typescript
-
-
 import { agent, ChatFlow, Context } from 'ai-sdk-simple-agents';
 import { openai } from '@ai-sdk/openai';
 
@@ -49,16 +47,16 @@ export type PlannerContext = Context & {
 const sqlAgent = agent({
   model: openai('gpt-4o'),
   system: (ctx: PlannerContext) => plannerPrompt(ctx.today),
-  description: "This agent can help you write SQL queries",
+  description: 'This agent can help you write SQL queries',
   tools: { sqlExecutor: sqlExecutorTool },
   asTool: {
-  input: z.object({
-    question: z.string().describe('The user query to analyze'),
-  }),
-  getPrompt: ({ question, }) => ({
-    prompt: `question: ${question}.
+    input: z.object({
+      question: z.string().describe('The user query to analyze'),
+    }),
+    getPrompt: ({ question }) => ({
+      prompt: `question: ${question}.
       - Make sure you return no more than 200 rows of data.`,
-    }),  
+    }),
   },
 });
 
@@ -71,24 +69,23 @@ export const routerAgent = agent({
 });
 
 const flow = new ChatFlow({ agent: routerAgent });
-const ctx = { history: [],today: new Date().toISOString().split('T')[0] };
+const ctx = { history: [], today: new Date().toISOString().split('T')[0] };
 const { result } = await flow.run(ctx);
-
 ```
 
 ## Project Structure
 
 ```
 src/
-├── agent.ts      # Core agent implementation
-├── context.ts    # Context management
-├── flow.ts       # Flow control and management
-├── flows/        # Predefined flow implementations
-│   └── chat-flow.ts # Chat flow implementation
-├── index.ts      # Main entry point
-├── prompt.ts     # Prompt handling
-├── stream.ts     # Streaming functionality
-└── tools.ts      # Tool definitions
+├── agent.ts          # Core agent implementation
+├── context.ts        # Context management
+├── flow.ts            # Flow control and management
+├── flows/             # Predefined flow implementations
+│   └── chat-flow.ts   # Chat flow implementation
+├── index.ts          # Main entry point
+├── prompt.ts         # Prompt handling
+├── stream.ts         # Streaming functionality
+└── tools.ts          # Tool definitions
 ```
 
 ## Development
@@ -107,7 +104,6 @@ src/
 - `yarn lint` - Run ESLint with auto-fix
 - `yarn format` - Format code using Prettier
 
-
 ### Tests
 
 Comprehensive tests are located in the `tests/` directory.
@@ -124,14 +120,14 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
-
 ## Acknowledgments
 
 - Built on top of the [Vercel AI SDK](https://sdk.vercel.ai/docs)
 - Heavily inspired by (openai agent framework)[https://github.com/openai/openai-agents-python]
 - Uses [Vitest](https://vitest.dev/) for testing
 
-#TODO:
+## TODO
+
 - [ ] Add more tests
 - [ ] Add more examples
 - [ ] Add more documentation
