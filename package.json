@@ -1,6 +1,6 @@
 {
   "name": "ai-sdk-agents",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "description": "Vercel AI SDK Simple Agents",
   "license": "MIT",
   "author": "Iaroslav Sobolev <sobolevslava@gmail.com>",
