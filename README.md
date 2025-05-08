@@ -1,6 +1,6 @@
 # AI SDK Simple Agents
 
-[![NPM version](https://img.shields.io/npm/v/ai-sdk-agents.svg)](https://npmjs.org/package/ai-sdk-agents) [![Actions Status][https://github.com/sslava/ai-sdk-agents/workflows/release/badge.svg]][https://github.com/sslava/ai-sdk-agents/actions]
+[![NPM version](https://img.shields.io/npm/v/ai-sdk-agents.svg)](https://npmjs.org/package/ai-sdk-agents) [![Actions Status](https://github.com/sslava/ai-sdk-agents/workflows/release/badge.svg)](https://github.com/sslava/ai-sdk-agents/actions)
 
 
 
