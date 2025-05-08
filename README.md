@@ -1,4 +1,4 @@
-# AI SDK Simple Agents
+# AI SDK Agents
 
 [![NPM version](https://img.shields.io/npm/v/ai-sdk-agents.svg)](https://npmjs.org/package/ai-sdk-agents) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebook/react/blob/main/LICENSE) [![Actions Status](https://github.com/sslava/ai-sdk-agents/workflows/release/badge.svg)](https://github.com/sslava/ai-sdk-agents/actions) 
 
@@ -17,11 +17,11 @@ A powerful and flexible library for building AI agents using the Vercel AI SDK. 
 ## Installation
 
 ```bash
-npm install ai-sdk-simple-agents
+npm install ai-sdk-agents
 # or
-yarn add ai-sdk-simple-agents
+yarn add ai-sdk-agents
 # or
-pnpm add ai-sdk-simple-agents
+pnpm add ai-sdk-agents
 ```
 
 ## Prerequisites
@@ -29,11 +29,11 @@ pnpm add ai-sdk-simple-agents
 This package requires the Vercel AI SDK and zod as a peer dependency:
 
 ```bash
-npm install ai
+npm install ai zod
 # or
-yarn add ai
+yarn add ai zod
 # or
-pnpm add ai
+pnpm add ai zod
 ```
 
 ## Usage
@@ -41,7 +41,7 @@ pnpm add ai
 Here's a basic example of how to use the library:
 
 ```typescript
-import { agent, ChatFlow, Context } from 'ai-sdk-simple-agents';
+import { agent, ChatFlow, Context } from 'ai-sdk-agents';
 import { openai } from '@ai-sdk/openai';
 
 export type PlannerContext = Context & {

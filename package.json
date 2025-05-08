@@ -38,6 +38,14 @@
       "require": "./dist/*.cjs"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sslava/ai-sdk-agents.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sslava/ai-sdk-agents/issues"
+  },
+  "homepage": "https://github.com/sslava/ai-sdk-agents#readme",
   "scripts": {
     "build": "tsc && tsup",
     "test": "vitest",
