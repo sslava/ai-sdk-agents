@@ -44,11 +44,11 @@ export abstract class AgentFlow<C extends Context> {
       agent,
       ctx,
       ctx.inner.history ?? [],
-      (event) => this.options.onChatStreamFinish?.(event, ctx),
-      (event) => {
-        const { response: _, request: __, ...rest } = event;
-        console.dir(rest, { depth: null });
-      }
+      (event) => this.options.onChatStreamFinish?.(event, ctx)
+      // (event) => {
+      //   const { response: _, request: __, ...rest } = event;
+      //   console.dir(rest, { depth: null });
+      // }
     );
 
     result.consumeStream();
@@ -142,11 +142,11 @@ export abstract class AgentFlow<C extends Context> {
           }
 
           // if tools are required, use generateText
-          const result = await this.agentGenerateText(agent, ctx, getPrompt(args), (event) => {
-            const { response: _, request: __, ...rest } = event;
-            console.log('inner step finish------------------------------------------------------');
-            console.dir(rest, { depth: null });
-            console.log('//------------------------------------------------------------------');
+          const result = await this.agentGenerateText(agent, ctx, getPrompt(args), (_) => {
+            // const { response: _, request: __, ...rest } = event;
+            // console.log('inner step finish------------------------------------------------------');
+            // console.dir(rest, { depth: null });
+            // console.log('//------------------------------------------------------------------');
           });
 
           if (agent.output) {

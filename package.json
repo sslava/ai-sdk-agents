@@ -49,8 +49,8 @@
   "scripts": {
     "build": "tsc && tsup",
     "test": "vitest",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint --fix",
     "format": "prettier --write .",
     "version": "changeset version",
     "release": "changeset publish",

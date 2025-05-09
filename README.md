@@ -115,7 +115,7 @@ Comprehensive tests are located in the `tests/` directory.
 
 ### Examples
 
-Example projects are located in the `examples/` directory. (Note: If the directory is currently named `exmaples/`, please rename it to `examples/`.)
+Example projects are located in the `examples/` directory.
 
 ## Contributing
 
