@@ -89,3 +89,6 @@ typings/
 dist/
 
 docs-test/
+
+examples/**/yarn.lock
+examples/**/package-lock.json

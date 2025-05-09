@@ -1,7 +1,6 @@
 # AI SDK Agents
 
-[![NPM version](https://img.shields.io/npm/v/ai-sdk-agents.svg)](https://npmjs.org/package/ai-sdk-agents) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebook/react/blob/main/LICENSE) [![Actions Status](https://github.com/sslava/ai-sdk-agents/workflows/release/badge.svg)](https://github.com/sslava/ai-sdk-agents/actions) 
-
+[![NPM version](https://img.shields.io/npm/v/ai-sdk-agents.svg)](https://npmjs.org/package/ai-sdk-agents) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebook/react/blob/main/LICENSE) [![Actions Status](https://github.com/sslava/ai-sdk-agents/workflows/release/badge.svg)](https://github.com/sslava/ai-sdk-agents/actions)
 
 
 A powerful and flexible library for building AI agents using the Vercel AI SDK. This project provides a simple yet powerful way to create and manage AI agents with customizable flows, tools, and contexts.
@@ -41,41 +40,48 @@ pnpm add ai zod
 Here's a basic example of how to use the library:
 
 ```typescript
-import { agent, ChatFlow, Context } from 'ai-sdk-agents';
+
+import { z } from 'zod';
+import { generateId } from 'ai';
 import { openai } from '@ai-sdk/openai';
+import { agent, ChatFlow } from 'ai-sdk-agents';
 
-export type PlannerContext = Context & {
-  today: string;
-};
-
-const sqlAgent = agent({
+// Math expert agent, exposed as a tool
+const mathAgent = agent({
   model: openai('gpt-4o'),
-  system: (ctx: PlannerContext) => plannerPrompt(ctx.today),
-  description: 'This agent can help you write SQL queries',
-  tools: { sqlExecutor: sqlExecutorTool },
+  description: 'Math expert that can answer questions and help with tasks.',
+  system: 'You are a math expert that can answer questions and help with tasks.',
+  output: z.object({
+    answer: z.string().describe('The answer to the math problem'),
+  }),
   asTool: {
     input: z.object({
-      question: z.string().describe('The user query to analyze'),
+      question: z.string().describe('The math problem to solve'),
     }),
     getPrompt: ({ question }) => ({
-      prompt: `question: ${question}.
-      - Make sure you return no more than 200 rows of data.`,
+      prompt: `Solve the following math problem: ${question}`,
     }),
   },
 });
 
-export const routerAgent = agent({
-  system: (ctx: InsightContext) => routerPrompt(ctx),
+const assistantAgent = agent({
   model: openai('gpt-4o'),
+  system: 'You are a helpful assistant that can answer questions and help with tasks.',
+  tools: { math: mathAgent },
   maxSteps: 5,
-  tools: { sqlAgent },
   toolChoice: 'auto',
 });
 
-const flow = new ChatFlow({ agent: routerAgent });
-const ctx = { history: [], today: new Date().toISOString().split('T')[0] };
-const { result } = await flow.run(ctx);
+const chat = new ChatFlow({ agent: assistantAgent });
+const context = { history: [{ role: 'user', content: 'What is the square root of 144?' }] };
+const { result } = await chat.run(context);
+const { messages } = await result.response;
+
+console.log(messages);
+
 ```
+
+This example demonstrates how to build a streaming chat API where the assistant agent can automatically use the math agent as a tool to solve math problems in user queries. The response is streamed in real time to the client.
 
 ## Project Structure
 
