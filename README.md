@@ -136,10 +136,11 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 - Built on top of the [Vercel AI SDK](https://sdk.vercel.ai/docs)
 - Heavily inspired by (openai agent framework)[https://github.com/openai/openai-agents-python]
 - Uses [Vitest](https://vitest.dev/) for testing
+- Inspired by [Anthropic's "Building effective agents"](https://www.anthropic.com/engineering/building-effective-agents) for agentic patterns and best practices
 
 ## TODO
 
 - [ ] Add more tests
-- [ ] Add more examples
+- [ ] Add more examplesment
 - [ ] Add more documentation
 - [ ] Inter-Agent memory
