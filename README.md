@@ -2,16 +2,16 @@
 
 [![NPM version](https://img.shields.io/npm/v/ai-sdk-agents.svg)](https://npmjs.org/package/ai-sdk-agents) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebook/react/blob/main/LICENSE) [![Actions Status](https://github.com/sslava/ai-sdk-agents/workflows/release/badge.svg)](https://github.com/sslava/ai-sdk-agents/actions)
 
-
-A powerful and flexible library for building AI agents using the Vercel AI SDK. This project provides a simple yet powerful way to create and manage AI agents with customizable flows, tools, and contexts.
+AI SDK Agents is an extension of the standard [Vercel AI SDK](https://sdk.vercel.ai/docs) API. It enables you to build advanced generative applications using patterns and agent compositions that are not supported by the Vercel AI SDK out of the box. With this library, you can define your own agents, compose them together, and call agents as tools within other agents, unlocking complex reasoning and orchestration flows.
 
 ## Features
 
-- 🤖 Simple agent creation and management
-- 🔄 Customizable agent flows
+- 🚀 Extends the Vercel AI SDK API to support new generative app patterns
+- 🤖 Define and compose agents (agents can call each other as tools)
+- 🔄 Flexible flow and step management
 - 🛠️ Extensible tool system
-- 📝 Context management
-- 🔄 Streaming support
+- 📝 Context and memory between steps
+- 🔄 Streaming response support
 
 ## Installation
 
