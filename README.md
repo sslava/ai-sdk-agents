@@ -141,6 +141,6 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## TODO
 
 - [ ] Add more tests
-- [ ] Add more examplesment
+- [ ] Add more examples
 - [ ] Add more documentation
 - [ ] Inter-Agent memory
