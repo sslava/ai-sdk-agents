@@ -87,3 +87,5 @@ typings/
 .dccache
 
 dist/
+
+docs-test/

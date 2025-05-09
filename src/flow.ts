@@ -194,7 +194,7 @@ export abstract class AgentFlow<C extends Context> {
     return tool as Tool;
   }
 
-  protected createContext<C extends Context>(ctx: C): IRunContext<C> {
+  public createContext<C extends Context>(ctx: C): IRunContext<C> {
     return new RunFlowContext<C>(ctx);
   }
 
