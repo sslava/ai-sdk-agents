@@ -40,7 +40,6 @@ pnpm add ai zod
 Here's a basic example of how to use the library:
 
 ```typescript
-
 import { z } from 'zod';
 import { generateId } from 'ai';
 import { openai } from '@ai-sdk/openai';
@@ -78,10 +77,17 @@ const { result } = await chat.run(context);
 const { messages } = await result.response;
 
 console.log(messages);
-
 ```
 
 This example demonstrates how to build a streaming chat API where the assistant agent can automatically use the math agent as a tool to solve math problems in user queries. The response is streamed in real time to the client.
+
+### Other examples
+
+- [**examples/contexts**](examples/contexts)  
+  _Demonstrates how to extend the agent context with custom values (like dates) and inject them into system prompts. Shows how to use both regular tools and other agents as tools within your assistant, enabling dynamic, context-aware behavior and multi-step reasoning._
+
+- [**examples/express**](examples/express)  
+  _Shows how to build a streaming chat API using Express, powered by two agents: a main assistant and a math expert agent (used as a tool). Features real-time streaming responses, conversation history, and a `/chat` endpoint for interactive queries._
 
 ## Project Structure
 
