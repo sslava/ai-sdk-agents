@@ -1,10 +1,10 @@
-import { LanguageModel, Message as AIMessage } from 'ai';
+import { LanguageModel, Message } from 'ai';
 import { Schema, z } from 'zod';
 
 import { GenericToolSet, inferParameters, ToolParameters } from './tools.js';
 import { Context } from './context.js';
 
-export type PromptType = { messages?: AIMessage[]; prompt?: string };
+export type PromptType = { messages?: Message[]; prompt?: string };
 
 export type LlmAgent<C extends Context, P extends ToolParameters> = {
   isLlmAgent: true;

@@ -7,7 +7,7 @@ import {
   ToolSet,
   Output,
   generateText,
-  Message as AIMessage,
+  Message,
   StepResult,
   StreamTextOnStepFinishCallback,
   GenerateTextOnStepFinishCallback,
@@ -62,7 +62,7 @@ export abstract class AgentFlow<C extends Context> {
   protected async agentStreamText<P extends ToolParameters>(
     agent: LlmAgent<C, P>,
     ctx: IRunContext<C>,
-    messages: AIMessage[],
+    messages: Message[],
     onFinish?: StreamTextOnFinishCallback<ToolSet>,
     onStepFinish?: StreamTextOnStepFinishCallback<ToolSet>
   ) {

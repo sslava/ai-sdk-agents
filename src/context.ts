@@ -1,4 +1,4 @@
-import { Message as AIMessage, CoreAssistantMessage, CoreToolMessage, DataStreamWriter } from 'ai';
+import { Message, CoreAssistantMessage, CoreToolMessage, DataStreamWriter } from 'ai';
 
 import { VercelStreamWriter } from './stream.js';
 
@@ -8,7 +8,7 @@ export type AIResponseMessage = (CoreAssistantMessage | CoreToolMessage) & {
 
 export type Context = {
   readonly dataStream?: DataStreamWriter;
-  readonly history?: AIMessage[];
+  readonly history?: Message[];
 };
 
 export interface IRunContext<C extends Context> {
@@ -16,7 +16,7 @@ export interface IRunContext<C extends Context> {
 
   get writer(): VercelStreamWriter;
   get inner(): C;
-  get history(): AIMessage[] | undefined;
+  get history(): Message[] | undefined;
 
   step(): IRunContext<C>;
 
@@ -28,7 +28,7 @@ class RunStepContext<C extends Context> implements IRunContext<C> {
 
   public data: Record<string, unknown> = {};
 
-  public get history(): AIMessage[] | undefined {
+  public get history(): Message[] | undefined {
     return this.context.history;
   }
 
@@ -56,7 +56,7 @@ class RunStepContext<C extends Context> implements IRunContext<C> {
 export class RunFlowContext<C extends Context> implements IRunContext<C> {
   public writer: VercelStreamWriter;
 
-  public messages: AIMessage[] = [];
+  public messages: Message[] = [];
 
   public responseMessages: AIResponseMessage[] = [];
 
@@ -75,7 +75,7 @@ export class RunFlowContext<C extends Context> implements IRunContext<C> {
     return step;
   }
 
-  public get history(): AIMessage[] | undefined {
+  public get history(): Message[] | undefined {
     return this.inner.history;
   }
 
