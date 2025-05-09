@@ -95,9 +95,9 @@ This example demonstrates how to build a streaming chat API where the assistant 
 src/
 ├── agent.ts           # Core agent implementation
 ├── context.ts         # Context management
-├── flow.ts             # Flow control and management
-├── flows/              # Predefined flow implementations
-│   └── chat-flow.ts    # Chat flow implementation
+├── flow.ts            # Flow control and management
+├── flows/             # Predefined flow implementations
+│   └── chat-flow.ts   # Chat flow implementation
 ├── index.ts           # Main entry point
 ├── tools.ts           # Tool definitions
 ├── types.ts           # Type definitions
@@ -118,12 +118,8 @@ src/
 ### Available Scripts
 
 - `yarn test` - Run tests using Vitest
-- `yarn lint` - Run ESLint with auto-fix
-- `yarn format` - Format code using Prettier
-
-### Tests
-
-Comprehensive tests are located in the `tests/` directory.
+- `yarn lint:fix` - Run ESLint with auto-fix
+- `yarn format` - Format code with Prettier
 
 ### Examples
 
@@ -146,7 +142,6 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## TODO
 
-- [ ] Add more tests
-- [ ] Add more examples
-- [ ] Add more documentation
+- [ ] Add next.js examples
+- [ ] Document pubic API and use cases
 - [ ] Inter-Agent memory
