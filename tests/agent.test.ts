@@ -39,7 +39,7 @@ describe('agent', () => {
         ...config,
         isLlmAgent: true,
         toolCallStreaming: true,
-        telemetry: true,
+        telemetry: undefined,
       });
     });
 
@@ -50,7 +50,7 @@ describe('agent', () => {
         model: mockModel,
         system: 'You are a test agent',
         toolCallStreaming: false,
-        telemetry: false,
+        telemetry: { isEnabled: false },
         maxSteps: 5,
       };
 
@@ -59,6 +59,7 @@ describe('agent', () => {
       expect(result).toEqual({
         ...config,
         isLlmAgent: true,
+        telemetry: { isEnabled: false },
       });
     });
   });
@@ -244,7 +245,7 @@ describe('agent', () => {
       };
 
       const result = agent(config);
-      expect(result.telemetry).toBe(true);
+      expect(result.telemetry).toBeUndefined();
     });
 
     it('should allow overriding default values', () => {
@@ -252,12 +253,12 @@ describe('agent', () => {
         model: mockModel,
         system: 'You are a test agent',
         toolCallStreaming: false,
-        telemetry: false,
+        telemetry: { isEnabled: false },
       };
 
       const result = agent(config);
       expect(result.toolCallStreaming).toBe(false);
-      expect(result.telemetry).toBe(false);
+      expect(result.telemetry).toEqual({ isEnabled: false });
     });
   });
 });

@@ -1,4 +1,4 @@
-import { LanguageModel, Message } from 'ai';
+import { LanguageModel, Message, TelemetrySettings } from 'ai';
 import { Schema, z } from 'zod';
 
 import { GenericToolSet, inferParameters, ToolParameters } from './tools.js';
@@ -22,7 +22,7 @@ export type LlmAgent<C extends Context, P extends ToolParameters> = {
     getPrompt: (args: inferParameters<P>) => PromptType;
   };
   maxSteps?: number;
-  telemetry?: boolean;
+  telemetry?: TelemetrySettings;
 };
 
 export type LlmAgentConfig<C extends Context, P extends ToolParameters> = Omit<
@@ -32,14 +32,12 @@ export type LlmAgentConfig<C extends Context, P extends ToolParameters> = Omit<
 
 export function agent<C extends Context, P extends ToolParameters>({
   toolCallStreaming = true,
-  telemetry = true,
   ...config
 }: LlmAgentConfig<C, P>): LlmAgent<C, P> {
   return {
     ...config,
     isLlmAgent: true,
     toolCallStreaming,
-    telemetry,
   };
 }
 
