@@ -13,6 +13,7 @@ import {
   GenerateTextOnStepFinishCallback,
   generateObject,
   generateId,
+  TelemetrySettings,
 } from 'ai';
 
 import { Context, IRunContext, RunFlowContext } from './context.js';
@@ -198,9 +199,12 @@ export abstract class AgentFlow<C extends Context> {
     return new RunFlowContext<C>(ctx);
   }
 
-  private getTelemetry<P extends ToolParameters>(agent: LlmAgent<C, P>) {
-    return agent.telemetry
-      ? { isEnabled: !!this.options.telemetry, functionId: 'generate-object' }
-      : undefined;
+  private getTelemetry<P extends ToolParameters>(
+    agent: LlmAgent<C, P>
+  ): TelemetrySettings | undefined {
+    if (!agent.telemetry) {
+      return undefined;
+    }
+    return { isEnabled: !!this.options.telemetry, ...agent.telemetry };
   }
 }
