@@ -29,9 +29,14 @@ export type StreamChatFinishCallback<C extends Context, TOOLS extends ToolSet> =
   ctx: IRunContext<C>
 ) => Promise<void> | void;
 
+type TelemetrySettingsCallback<C extends Context> = (
+  agent: LlmAgent<C, ToolParameters>,
+  ctx: IRunContext<C>
+) => TelemetrySettings | undefined;
+
 type FlowOptions<C extends Context> = {
   onChatStreamFinish?: StreamChatFinishCallback<C, ToolSet>;
-  telemetry?: boolean;
+  telemetry?: false | TelemetrySettings | TelemetrySettingsCallback<C>;
 };
 
 export abstract class AgentFlow<C extends Context> {
@@ -79,7 +84,7 @@ export abstract class AgentFlow<C extends Context> {
       experimental_generateMessageId: this.generateUUID,
       onFinish,
       onStepFinish,
-      experimental_telemetry: this.getTelemetry(agent),
+      experimental_telemetry: this.getTelemetry(agent, ctx),
     });
   }
 
@@ -99,7 +104,7 @@ export abstract class AgentFlow<C extends Context> {
       onStepFinish,
       experimental_generateMessageId: this.generateUUID,
       experimental_output: agent.output ? Output.object({ schema: agent.output }) : undefined,
-      experimental_telemetry: this.getTelemetry(agent),
+      experimental_telemetry: this.getTelemetry(agent, ctx),
     });
   }
 
@@ -117,7 +122,7 @@ export abstract class AgentFlow<C extends Context> {
       system: getContextPrompt(agent.system, ctx),
       ...prompt,
       schema: agent.output,
-      experimental_telemetry: this.getTelemetry(agent),
+      experimental_telemetry: this.getTelemetry(agent, ctx),
     });
   }
 
@@ -200,11 +205,15 @@ export abstract class AgentFlow<C extends Context> {
   }
 
   private getTelemetry<P extends ToolParameters>(
-    agent: LlmAgent<C, P>
+    agent: LlmAgent<C, P>,
+    ctx: IRunContext<C>
   ): TelemetrySettings | undefined {
-    if (!agent.telemetry) {
+    if (!this.options.telemetry) {
       return undefined;
     }
-    return { isEnabled: !!this.options.telemetry, ...agent.telemetry };
+    if (typeof this.options.telemetry === 'function') {
+      return this.options.telemetry(agent, ctx);
+    }
+    return { ...(agent.telemetry ?? {}), ...this.options.telemetry };
   }
 }
