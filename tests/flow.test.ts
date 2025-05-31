@@ -77,7 +77,9 @@ describe('AgentFlow', () => {
       system: 'You are a test agent',
       isLlmAgent: true,
       toolCallStreaming: true,
-      telemetry: true,
+      telemetry: {
+        functionId: 'test-fn',
+      },
     };
     flow = new TestFlow({ agent: mockAgent });
   });
