@@ -112,14 +112,14 @@ src/
 1. Clone the repository
 2. Install dependencies:
    ```bash
-   yarn install
+   pnpm install
    ```
 
 ### Available Scripts
 
-- `yarn test` - Run tests using Vitest
-- `yarn lint:fix` - Run ESLint with auto-fix
-- `yarn format` - Format code with Prettier
+- `pnpm test` - Run tests using Vitest
+- `pnpm lint:fix` - Run ESLint with auto-fix
+- `pnpm format` - Format code with Prettier
 
 ### Examples
 

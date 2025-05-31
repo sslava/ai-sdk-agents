@@ -15,7 +15,7 @@ This example demonstrates how to use the [ai-sdk-agents](https://www.npmjs.com/p
 ## Prerequisites
 
 - Node.js v18 or newer
-- [Yarn](https://yarnpkg.com/) or [npm](https://www.npmjs.com/)
+- [npm](https://www.npmjs.com/)
 - An OpenAI API key (set as `OPENAI_API_KEY` in your environment)
 
 ## Setup
@@ -23,7 +23,7 @@ This example demonstrates how to use the [ai-sdk-agents](https://www.npmjs.com/p
 1. **Install dependencies:**
 
    ```bash
-   yarn install
+   pnpm install
    # or
    npm install
    ```

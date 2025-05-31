@@ -23,7 +23,7 @@ Make sure the code you're adding has decent test coverage.
 Running project tests and coverage:
 
 ```bash
-yarn test
+pnpm test
 ```
 
 ### Commit Guidelines
