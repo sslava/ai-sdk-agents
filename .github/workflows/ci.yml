@@ -17,15 +17,15 @@ jobs:
         with:
           node-version: ${{matrix.node}}
       - name: install dependencies
-        run: yarn install
+        run: pnpm install
       - name: lint code
-        run: yarn lint
+        run: pnpm lint
       - name: build project
-        run: yarn build
+        run: pnpm build
       - name: run tests
-        run: yarn test
+        run: pnpm test
       - name: run tests with coverage
-        run: yarn vitest run --coverage
+        run: pnpm vitest run --coverage
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:

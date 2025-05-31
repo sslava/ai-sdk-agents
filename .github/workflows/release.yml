@@ -23,14 +23,14 @@ jobs:
         with:
           node-version: 22.x
       - name: install dependencies
-        run: yarn install
+        run: pnpm install
       - name: build project
-        run: yarn build
+        run: pnpm build
       - name: Create Release Pull Request or Publish to npm
         uses: changesets/action@v1
         with:
-          publish: yarn release
-          version: yarn version
+          publish: pnpm release
+          version: pnpm version
           commit: 'chore: new release'
           title: 'chore: new release candidate'
         env:

@@ -37,7 +37,7 @@ The assistant:
 1. **Install dependencies:**
 
    ```bash
-   yarn install
+   pnpm install
    ```
 
 2. **Set up your environment:**
@@ -49,7 +49,7 @@ The assistant:
 
 3. **Run the example:**
    ```bash
-   yarn start
+   pnpm start
    ```
 
 ## File Structure
@@ -60,7 +60,7 @@ The assistant:
 ## Requirements
 
 - Node.js
-- Yarn
+- pnpm
 
 ## Dependencies
 
