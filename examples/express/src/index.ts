@@ -35,21 +35,21 @@ const assistantAgent = agent({
   tools: { math: mathAgent },
 });
 
-let coversation: Message[] = [];
+let conversation: Message[] = [];
 
 app.get('/chat', async (req, res) => {
   const query = req.query.q as string;
 
-  coversation.push({ role: 'user', content: query, id: generateId() });
+  conversation.push({ role: 'user', content: query, id: generateId() });
 
   pipeDataStreamToResponse(res, {
     execute: async (dataStream) => {
-      const context = { dataStream, history: coversation };
+      const context = { dataStream, history: conversation };
 
       const chat = new ChatFlow({
         agent: assistantAgent,
         onFinish: async ({ response }, ctx) => {
-          coversation = appendResponseMessages({
+          conversation = appendResponseMessages({
             messages: ctx.history ?? [],
             responseMessages: response.messages,
           });
