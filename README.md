@@ -100,9 +100,7 @@ src/
 │   └── chat-flow.ts   # Chat flow implementation
 ├── index.ts           # Main entry point
 ├── tools.ts           # Tool definitions
-├── types.ts           # Type definitions
-├── utils.ts           # Utility functions
-└── prompts.ts         # Prompt handling
+└── prompt.ts          # Prompt handling
 ```
 
 ## Development
