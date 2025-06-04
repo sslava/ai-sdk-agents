@@ -130,11 +130,14 @@ describe('ChatFlow', () => {
       const onFinish = vi.fn();
       const flowWithCallback = new ChatFlow({ agent: mockAgent, onFinish });
 
-      const { result } = await flowWithCallback.run(mockContext);
+      const { context, result } = await flowWithCallback.run(mockContext);
       await result.consumeStream();
-      await result.steps;
+      const steps = await result.steps;
 
-      expect(onFinish).toHaveBeenCalled();
+      expect(onFinish).toHaveBeenCalledWith(
+        expect.objectContaining({ steps }),
+        context.steps[0]
+      );
     });
 
     it('should handle stream errors properly', async () => {
