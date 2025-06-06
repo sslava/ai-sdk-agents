@@ -51,10 +51,6 @@ export abstract class AgentFlow<C extends Context> {
       ctx,
       ctx.inner.history ?? [],
       (event) => this.options.onChatStreamFinish?.(event, ctx)
-      // (event) => {
-      //   const { response: _, request: __, ...rest } = event;
-      //   console.dir(rest, { depth: null });
-      // }
     );
 
     result.consumeStream();
@@ -138,22 +134,57 @@ export abstract class AgentFlow<C extends Context> {
       parameters: input,
       execute: async (args: inferParameters<P> & { reasoning?: string }) => {
         try {
-          // tools count
           const toolCount = Object.keys(agent.tools ?? {}).length;
 
-          // if no tools and output is defined, use generateObject
+          const memoryKey = agent.name ?? agent.description;
+          const store = ctx.memory;
+          let history: Message[] | undefined;
+          if (store && memoryKey) {
+            history = await store.load(memoryKey);
+          }
+
+          let prompt = getPrompt(args);
+          if (history && history.length) {
+            if (prompt.messages) {
+              prompt = { messages: [...history, ...prompt.messages] };
+            } else if (prompt.prompt) {
+              prompt = {
+                messages: [
+                  ...history,
+                  { role: 'user', content: prompt.prompt, id: this.generateUUID() },
+                ],
+              };
+            }
+          }
+
           if (!toolCount && agent.output) {
-            const { object } = await this.agentGenerateObject(agent, ctx, getPrompt(args));
+            const { object } = await this.agentGenerateObject(agent, ctx, prompt);
+            if (store && memoryKey) {
+              const newHistory = [
+                ...(history ?? []),
+                ...(prompt.messages?.slice(-1) ?? [
+                  { role: 'user', content: prompt.prompt ?? '', id: this.generateUUID() },
+                ]),
+                { role: 'assistant', content: JSON.stringify(object), id: this.generateUUID() },
+              ];
+              await store.save(memoryKey, newHistory);
+            }
             return object;
           }
 
-          // if tools are required, use generateText
-          const result = await this.agentGenerateText(agent, ctx, getPrompt(args), (_) => {
-            // const { response: _, request: __, ...rest } = event;
-            // console.log('inner step finish------------------------------------------------------');
-            // console.dir(rest, { depth: null });
-            // console.log('//------------------------------------------------------------------');
-          });
+          const result = await this.agentGenerateText(agent, ctx, prompt, () => {});
+
+          const answer = agent.output ? JSON.stringify(result.experimental_output) : result.text;
+          if (store && memoryKey) {
+            const newHistory = [
+              ...(history ?? []),
+              ...(prompt.messages?.slice(-1) ?? [
+                { role: 'user', content: prompt.prompt ?? '', id: this.generateUUID() },
+              ]),
+              { role: 'assistant', content: answer, id: this.generateUUID() },
+            ];
+            await store.save(memoryKey, newHistory);
+          }
 
           if (agent.output) {
             return result.experimental_output;
