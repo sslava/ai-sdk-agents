@@ -101,19 +101,22 @@ describe('ChatFlow', () => {
       };
 
       mockAgent.tools = tools;
-      mockModel.doStream = async (options) => ({
-        stream: simulateReadableStream({
-          chunks: [
-            { type: 'text-delta', textDelta: 'Tool execution result' },
-            {
-              type: 'finish',
-              finishReason: 'stop',
-              usage: { promptTokens: 10, completionTokens: 20 },
-            },
-          ],
-        }),
-        rawCall: { rawPrompt: options.prompt, rawSettings: {} },
-      });
+      mockModel.doStream = async (options) => {
+        await tools.search.execute({ query: 'test' });
+        return {
+          stream: simulateReadableStream({
+            chunks: [
+              { type: 'text-delta', textDelta: 'Tool execution result' },
+              {
+                type: 'finish',
+                finishReason: 'stop',
+                usage: { promptTokens: 10, completionTokens: 20 },
+              },
+            ],
+          }),
+          rawCall: { rawPrompt: options.prompt, rawSettings: {} },
+        };
+      };
 
       const { result } = await flow.run(mockContext);
       await result.consumeStream();
@@ -124,6 +127,7 @@ describe('ChatFlow', () => {
           stepType: 'initial',
         }),
       ]);
+      expect(tools.search.execute).toHaveBeenCalled();
     });
 
     it('should call onFinish callback when provided', async () => {

@@ -141,5 +141,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## TODO
 
 - [ ] Add next.js examples
-- [ ] Document pubic API and use cases
+ - [ ] Document public API and use cases
 - [ ] Inter-Agent memory
