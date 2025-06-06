@@ -141,7 +141,7 @@ export abstract class AgentFlow<C extends Context> {
           }
 
           let prompt = getPrompt(args);
-          if (history && history.length) {
+          if (history?.length) {
             if (prompt.messages) {
               prompt = { messages: [...history, ...prompt.messages] };
             } else if (prompt.prompt) {
@@ -160,9 +160,13 @@ export abstract class AgentFlow<C extends Context> {
               const newHistory = [
                 ...(history ?? []),
                 ...(prompt.messages?.slice(-1) ?? [
-                  { role: 'user', content: prompt.prompt ?? '', id: this.generateUUID() },
+                  { role: 'user' as const, content: prompt.prompt ?? '', id: this.generateUUID() },
                 ]),
-                { role: 'assistant', content: JSON.stringify(object), id: this.generateUUID() },
+                {
+                  role: 'assistant' as const,
+                  content: JSON.stringify(object),
+                  id: this.generateUUID(),
+                },
               ];
               await store.save(memoryKey, newHistory);
             }
@@ -176,9 +180,9 @@ export abstract class AgentFlow<C extends Context> {
             const newHistory = [
               ...(history ?? []),
               ...(prompt.messages?.slice(-1) ?? [
-                { role: 'user', content: prompt.prompt ?? '', id: this.generateUUID() },
+                { role: 'user' as const, content: prompt.prompt ?? '', id: this.generateUUID() },
               ]),
-              { role: 'assistant', content: answer, id: this.generateUUID() },
+              { role: 'assistant' as const, content: answer, id: this.generateUUID() },
             ];
             await store.save(memoryKey, newHistory);
           }
