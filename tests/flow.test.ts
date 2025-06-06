@@ -144,7 +144,7 @@ describe('AgentFlow', () => {
 
       await expect(async () => {
         flow.testCreateLlmTool(mockAgent, stepContext);
-      }).rejects.toThrow('toolParams and description are required');
+      }).rejects.toThrow('asTool and description are required');
     });
 
     it('should create an LLM tool when configured properly', async () => {

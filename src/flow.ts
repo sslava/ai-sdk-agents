@@ -128,7 +128,7 @@ export abstract class AgentFlow<C extends Context> {
 
   protected createLlmTool<P extends ToolParameters>(agent: LlmAgent<C, P>, ctx: IRunContext<C>) {
     if (!agent.asTool || !agent.description) {
-      throw new Error('toolParams and description are required');
+      throw new Error('asTool and description are required');
     }
 
     const { input, getPrompt } = agent.asTool;
@@ -200,7 +200,7 @@ export abstract class AgentFlow<C extends Context> {
     return tool as Tool;
   }
 
-  public createContext<C extends Context>(ctx: C): IRunContext<C> {
+  public createContext(ctx: C): IRunContext<C> {
     return new RunFlowContext<C>(ctx);
   }
 
