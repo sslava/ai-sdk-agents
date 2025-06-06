@@ -46,11 +46,8 @@ export abstract class AgentFlow<C extends Context> {
   ) {}
 
   protected async streamChat<P extends ToolParameters>(agent: LlmAgent<C, P>, ctx: IRunContext<C>) {
-    const result = await this.agentStreamText(
-      agent,
-      ctx,
-      ctx.inner.history ?? [],
-      (event) => this.options.onChatStreamFinish?.(event, ctx)
+    const result = await this.agentStreamText(agent, ctx, ctx.inner.history ?? [], (event) =>
+      this.options.onChatStreamFinish?.(event, ctx)
     );
 
     result.consumeStream();
