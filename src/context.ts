@@ -1,6 +1,7 @@
 import { Message, CoreAssistantMessage, CoreToolMessage, DataStreamWriter } from 'ai';
 
 import { VercelStreamWriter } from './stream.js';
+import { MemoryStore } from './memory.js';
 
 export type AIResponseMessage = (CoreAssistantMessage | CoreToolMessage) & {
   id: string;
@@ -9,6 +10,7 @@ export type AIResponseMessage = (CoreAssistantMessage | CoreToolMessage) & {
 export type Context = {
   readonly dataStream?: DataStreamWriter;
   readonly history?: Message[];
+  readonly memory?: MemoryStore;
 };
 
 export interface IRunContext<C extends Context> {
@@ -17,6 +19,7 @@ export interface IRunContext<C extends Context> {
   get writer(): VercelStreamWriter;
   get inner(): C;
   get history(): Message[] | undefined;
+  get memory(): MemoryStore | undefined;
 
   step(): IRunContext<C>;
 
@@ -38,6 +41,10 @@ class RunStepContext<C extends Context> implements IRunContext<C> {
 
   public get writer(): VercelStreamWriter {
     return this.context.writer;
+  }
+
+  public get memory(): MemoryStore | undefined {
+    return this.context.memory;
   }
 
   constructor(public readonly context: RunFlowContext<C>) {}
@@ -67,6 +74,10 @@ export class RunFlowContext<C extends Context> implements IRunContext<C> {
   constructor(ctx: C) {
     this.inner = ctx;
     this.writer = new VercelStreamWriter(ctx.dataStream);
+  }
+
+  public get memory(): MemoryStore | undefined {
+    return this.inner.memory;
   }
 
   public step(): IRunContext<C> {

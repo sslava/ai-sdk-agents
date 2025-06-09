@@ -5,3 +5,4 @@ export * from './prompt.js';
 export * from './stream.js';
 export * from './tools.js';
 export * from './flows/chat-flow.js';
+export * from './memory.js';
