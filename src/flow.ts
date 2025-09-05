@@ -1,26 +1,28 @@
 import {
   smoothStream,
-  streamText,
   StreamTextOnFinishCallback,
   tool,
   Tool,
   ToolSet,
   Output,
-  generateText,
+  generateText as paidGenerateText,
   Message,
   StepResult,
   StreamTextOnStepFinishCallback,
   GenerateTextOnStepFinishCallback,
-  generateObject,
+  generateObject as paidGenerateObject,
   generateId,
   TelemetrySettings,
-} from 'ai';
+} from '@paid-ai/paid-node';
 
 import { Context, IRunContext, RunFlowContext } from './context.js';
 import { LlmAgent, PromptType } from './agent.js';
 
 import { GenericToolSet, inferParameters, IToolFactory, ToolParameters } from './tools.js';
 import { getContextPrompt } from './prompt.js';
+
+import { paidStreamText } from '@paid-ai/paid-node';
+import { getClient } from './lib/client.js';
 
 export type StreamChatFinishCallback<C extends Context, TOOLS extends ToolSet> = (
   event: Omit<StepResult<TOOLS>, 'stepType' | 'isContinued'> & {
@@ -65,19 +67,22 @@ export abstract class AgentFlow<C extends Context> {
     onFinish?: StreamTextOnFinishCallback<ToolSet>,
     onStepFinish?: StreamTextOnStepFinishCallback<ToolSet>
   ) {
-    return streamText({
-      model: agent.model,
-      system: getContextPrompt(agent.system, ctx),
-      messages,
-      tools: this.getTools(agent.tools, ctx),
-      toolChoice: agent.toolChoice,
-      toolCallStreaming: agent.toolCallStreaming,
-      maxSteps: agent.maxSteps,
-      experimental_transform: smoothStream({ chunking: 'word' }),
-      experimental_generateMessageId: this.generateUUID,
-      onFinish,
-      onStepFinish,
-      experimental_telemetry: this.getTelemetry(agent, ctx),
+    const client = await getClient();
+    return client.trace('external-id', async () => {
+      return paidStreamText({
+        model: agent.model,
+        system: getContextPrompt(agent.system, ctx),
+        messages,
+        tools: this.getTools(agent.tools, ctx),
+        toolChoice: agent.toolChoice,
+        toolCallStreaming: agent.toolCallStreaming,
+        maxSteps: agent.maxSteps,
+        experimental_transform: smoothStream({ chunking: 'word' }),
+        experimental_generateMessageId: this.generateUUID,
+        onFinish,
+        onStepFinish,
+        experimental_telemetry: this.getTelemetry(agent, ctx),
+      });
     });
   }
 
@@ -87,21 +92,24 @@ export abstract class AgentFlow<C extends Context> {
     prompt: PromptType,
     onStepFinish?: GenerateTextOnStepFinishCallback<ToolSet>
   ) {
-    return generateText({
-      model: agent.model,
-      system: getContextPrompt(agent.system, ctx),
-      ...prompt,
-      tools: this.getTools(agent.tools, ctx),
-      toolChoice: agent.toolChoice,
-      maxSteps: agent.maxSteps,
-      onStepFinish,
-      experimental_generateMessageId: this.generateUUID,
-      experimental_output: agent.output ? Output.object({ schema: agent.output }) : undefined,
-      experimental_telemetry: this.getTelemetry(agent, ctx),
+    const client = await getClient();
+    return client.trace('external-id', async () => {
+      return paidGenerateText({
+        model: agent.model,
+        system: getContextPrompt(agent.system, ctx),
+        ...prompt,
+        tools: this.getTools(agent.tools, ctx),
+        toolChoice: agent.toolChoice,
+        maxSteps: agent.maxSteps,
+        onStepFinish,
+        experimental_generateMessageId: this.generateUUID,
+        experimental_output: agent.output ? Output.object({ schema: agent.output }) : undefined,
+        experimental_telemetry: this.getTelemetry(agent, ctx),
+      });
     });
   }
 
-  protected agentGenerateObject<P extends ToolParameters>(
+  protected async agentGenerateObject<P extends ToolParameters>(
     agent: LlmAgent<C, P>,
     ctx: IRunContext<C>,
     prompt: PromptType
@@ -110,12 +118,15 @@ export abstract class AgentFlow<C extends Context> {
       throw new Error('output is required');
     }
 
-    return generateObject({
-      model: agent.model,
-      system: getContextPrompt(agent.system, ctx),
-      ...prompt,
-      schema: agent.output,
-      experimental_telemetry: this.getTelemetry(agent, ctx),
+    const client = await getClient();
+    return client.trace('external-id', async () => {
+      return paidGenerateObject({
+        model: agent.model,
+        system: getContextPrompt(agent.system, ctx),
+        ...prompt,
+        schema: agent.output,
+        experimental_telemetry: this.getTelemetry(agent, ctx),
+      });
     });
   }
 
