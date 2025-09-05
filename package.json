@@ -87,5 +87,8 @@
       "pnpm lint:fix"
     ]
   },
-  "packageManager": "pnpm@10.11.0"
+  "packageManager": "pnpm@10.11.0",
+  "dependencies": {
+    "@paid-ai/paid-node": "0.0.8-alpha4"
+  }
 }
